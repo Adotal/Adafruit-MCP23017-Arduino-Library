@@ -98,3 +98,49 @@ void Adafruit_MCP23X17::enableAddrPins() {
   GPIONoAddr.write((1 << 3), 1); // Bit3: HAEN, devices with A2 = 0
   GPIOAddr.write((1 << 3), 1);   // Devices with A2 = 1 (if any)
 }
+
+
+/**************************************************************************/
+/*!
+  @brief emulate pulseIn() function of Arduino stock (pulse duration)
+  @param pin MCP23017 pin to measure pulse duration
+  @param statue must be HIGH or LOW (1 or 0) to measure HIGH or LOW duration
+  @param timeout max time to spend measuring pulse's duration
+  @return pulse duration or 0 if timeout is reached
+
+  Implemented for reading HC-SR04 sensors, recommended to
+  set Wire.setClock(400000);
+*/
+/**************************************************************************/
+
+
+unsigned long Adafruit_MCP23X17::pulseIn(uint8_t pin, uint8_t state, unsigned long timeout)
+{
+    if (pin > 15) return 0;
+
+    uint16_t mask = (1UL << pin);
+    unsigned long start = micros();
+    unsigned long timeoutTime = start + timeout;
+
+    // Wait for previous pulse to end
+    while ((readGPIOAB() & mask ? HIGH : LOW) == state)
+    {
+        if ((long)(micros() - timeoutTime) >= 0) return 0;
+    }
+
+    // Wait for pulse to start
+    while ((readGPIOAB() & mask ? HIGH : LOW) != state)
+    {
+        if ((long)(micros() - timeoutTime) >= 0) return 0;
+    }
+
+    unsigned long pulseStart = micros();
+
+    // Wait for pulse to end
+    while ((readGPIOAB() & mask ? HIGH : LOW) == state)
+    {
+        if ((long)(micros() - timeoutTime) >= 0) return 0;
+    }
+
+    return micros() - pulseStart;
+}

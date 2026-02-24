@@ -23,6 +23,7 @@ public:
   uint16_t readGPIOAB();
   void writeGPIOAB(uint16_t value);
   void enableAddrPins();
+  unsigned long pulseIn(uint8_t pin, uint8_t state, unsigned long timeout);
 };
 
 #endif
